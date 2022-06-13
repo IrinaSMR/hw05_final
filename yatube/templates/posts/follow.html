@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Активные подписки{% endblock %}
+
+{% block content %}
+{% include 'posts/includes/switcher.html' %}
+<main> 
+  <div class="container py-5">     
+    <h1>Активные подписки</h1>
+    <article>
+    {% for post in page_obj %}
+    {% include 'includes/main.html' %}  
+    {% if post.group %}   
+    <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
+    {% endif %} 
+    {% if not forloop.last %}<hr>{% endif %}
+    {% endfor %}
+    </article>
+  </div>
+{% include 'posts/includes/paginator.html' %}
+</main>
+{% endblock %}
