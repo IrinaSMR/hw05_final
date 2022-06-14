@@ -1,24 +1,24 @@
 import shutil
 import tempfile
 
-from django.core.cache import cache
 from django import forms
 from django.conf import settings
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from posts.models import Group, Post, Comment, Follow
+from posts.models import Comment, Follow, Group, Post
 
 User = get_user_model()
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
+
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 
 class PostPagesTest(TestCase):
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -35,7 +35,7 @@ class PostPagesTest(TestCase):
             slug='test-slug',
             description='test_description'
         )
-        small_gif = (            
+        small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'
             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
@@ -80,7 +80,6 @@ class PostPagesTest(TestCase):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
-        
     def setUp(self):
         self.guest_client = Client()
         self.auth_author_client = Client()
@@ -179,17 +178,19 @@ class PostPagesTest(TestCase):
 
         self.authorized_not_author_client.post(
             reverse('posts:add_comment',
-            kwargs={'post_id': post.id}
+                   kwargs={'post_id': post.id}
             ),
             data=form_data,
             follow=True
         )
-        self.assertTrue(Comment.objects.filter(text=form_data['text']).exists())
+        self.assertTrue(
+            Comment.objects.filter(text=form_data['text']).exists())
         response = self.authorized_not_author_client.get(
             reverse('posts:post_detail', kwargs={'post_id': post.id})
         )
         comment = Comment.objects.last()
-        self.assertIn(comment, response.context['comments'], 'Комментарий отсутствует')
+        self.assertIn(
+            comment, response.context['comments'], 'Комментарий отсутствует')
 
     def test_index_page_cache(self):
         """Проверка работы кэша на странице index."""

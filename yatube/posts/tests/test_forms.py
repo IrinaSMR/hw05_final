@@ -1,6 +1,6 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from posts.models import Group, Post, User
 
@@ -85,4 +85,8 @@ class PostFormTests(TestCase):
             follow=True
         )
         self.assertEqual(Post.objects.count(), count_posts + 1)
-        self.assertRedirects(response, reverse('posts:profile', args=[PostFormTests.user.username]))
+        self.assertRedirects(
+            response,
+            reverse('posts:profile',
+                   args=[PostFormTests.user.username])
+        )
