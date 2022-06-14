@@ -278,27 +278,31 @@ class FollowTest(TestCase):
 
     def test_authorized_client_can_follow(self):
         """Только авторизованный пользователь может подписываться."""
-        self.authorized_client.get(reverse('posts:profile_follow',
-                                   kwargs={'username': self.author})
+        self.authorized_client.get(
+            reverse('posts:profile_follow',
+                    kwargs={'username': self.author})
         )
         follow = Follow.objects.all().count()
         self.assertEqual(follow, 1)
-        self.guest_client.get(reverse('posts:profile_follow',
-                              kwargs={'username': self.author})
+        self.guest_client.get(
+            reverse('posts:profile_follow',
+                    kwargs={'username': self.author})
         )
         follow = Follow.objects.all().count()
-        self.assertEqual(follow, 1)                       
+        self.assertEqual(follow, 1)
 
     def test_authorized_client_can_unfollow(self):
         """Только авторизованный пользователь может отписываться."""
         Follow.objects.create(user=self.user, author=self.author)
-        self.guest_client.get(reverse('posts:profile_unfollow',
-                              kwargs={'username': self.author})
+        self.guest_client.get(
+            reverse('posts:profile_unfollow',
+                    kwargs={'username': self.author})
         )
         follow = Follow.objects.all().count()
         self.assertEqual(follow, 1)
-        self.authorized_client.get(reverse('posts:profile_unfollow',
-                                   kwargs={'username': self.author})
+        self.authorized_client.get(
+            reverse('posts:profile_unfollow',
+                    kwargs={'username': self.author})
         )
         follow = Follow.objects.all().count()
         self.assertEqual(follow, 0)
@@ -306,8 +310,9 @@ class FollowTest(TestCase):
     def test_new_post_for_follower(self):
         """В ленте подписчика появляется новая запись автора,
          на которого он подписан."""
-        self.authorized_client.get(reverse('posts:profile_follow',
-                                   kwargs={'username': self.author})
+        self.authorized_client.get(
+            reverse('posts:profile_follow',
+                    kwargs={'username': self.author})
         )
         Post.objects.create(text='Пост для ленты', author=self.author)
         Post.objects.create(text='Пост для главной', author=self.user)

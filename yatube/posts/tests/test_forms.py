@@ -87,6 +87,7 @@ class PostFormTests(TestCase):
         self.assertEqual(Post.objects.count(), count_posts + 1)
         self.assertRedirects(
             response,
-            reverse('posts:profile',
-                   args=[PostFormTests.user.username])
+            reverse(
+                'posts:profile',
+                args=[PostFormTests.user.username])
         )
