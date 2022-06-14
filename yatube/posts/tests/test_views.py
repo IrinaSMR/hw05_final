@@ -176,7 +176,6 @@ class PostPagesTest(TestCase):
             'post': post,
             'author': PostPagesTest.not_author
         }
-        form_text = form_data['text']
 
         self.authorized_not_author_client.post(
             reverse('posts:add_comment',
@@ -185,7 +184,7 @@ class PostPagesTest(TestCase):
             data=form_data,
             follow=True
         )
-        self.assertTrue(Comment.objects.filter(text=form_text).exists())
+        self.assertTrue(Comment.objects.filter(text=form_data['text']).exists())
         response = self.authorized_not_author_client.get(
             reverse('posts:post_detail', kwargs={'post_id': post.id})
         )
@@ -194,16 +193,13 @@ class PostPagesTest(TestCase):
 
     def test_index_page_cache(self):
         """Проверка работы кэша на странице index."""
-        response = self.guest_client.get(reverse('posts:index'))
-        page = response.content
+        page_1 = self.guest_client.get(reverse('posts:index')).content
         Post.objects.create(text='Текст', author=self.author)
-        response = self.guest_client.get(reverse('posts:index'))
-        cache_page = response.content
-        self.assertEqual(page, cache_page)
+        page_2 = self.guest_client.get(reverse('posts:index')).content
+        self.assertEqual(page_1, page_2)
         cache.clear()
-        response = self.guest_client.get(reverse('posts:index'))
-        page_new_cache = response.content
-        self.assertNotEqual(page, page_new_cache)    
+        page_3 = self.guest_client.get(reverse('posts:index')).content
+        self.assertNotEqual(page_1, page_3)
 
 
 class PaginatorViewsTest(TestCase):
@@ -254,6 +250,16 @@ class ViewTestClass(TestCase):
         response = self.client.get('/nonexist-page/')
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, 'core/404.html')
+
+    def test_permission_denied(self):
+        response = self.guest_client.get('')
+        self.assertEqual(response.status_code, 403)
+        self.assertTemplateUsed(response, 'core/403.html')
+
+    def test_server_error(self):
+        response = self.guest_client.get('')
+        self.assertEqual(response.status_code, 500)
+        self.assertTemplateUsed(response, 'core/500.html')
 
 
 class FollowTest(TestCase):
