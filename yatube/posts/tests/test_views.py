@@ -17,7 +17,6 @@ TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
-
 class PostPagesTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -177,8 +176,9 @@ class PostPagesTest(TestCase):
         }
 
         self.authorized_not_author_client.post(
-            reverse('posts:add_comment',
-                   kwargs={'post_id': post.id}
+            reverse(
+                'posts:add_comment',
+                kwargs={'post_id': post.id}
             ),
             data=form_data,
             follow=True
@@ -246,6 +246,7 @@ class PaginatorViewsTest(TestCase):
                     'page_obj'
                 ).object_list), 3)
 
+
 class ViewTestClass(TestCase):
     def test_page_not_found(self):
         response = self.client.get('/nonexist-page/')
@@ -286,7 +287,7 @@ class FollowTest(TestCase):
                               kwargs={'username': self.author})
         )
         follow = Follow.objects.all().count()
-        self.assertEqual(follow, 1)                                           
+        self.assertEqual(follow, 1)                       
 
     def test_authorized_client_can_unfollow(self):
         """Только авторизованный пользователь может отписываться."""
