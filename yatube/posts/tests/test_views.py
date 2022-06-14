@@ -253,16 +253,6 @@ class ViewTestClass(TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertTemplateUsed(response, 'core/404.html')
 
-    def test_permission_denied(self):
-        response = self.guest_client.get('')
-        self.assertEqual(response.status_code, 403)
-        self.assertTemplateUsed(response, 'core/403.html')
-
-    def test_server_error(self):
-        response = self.guest_client.get('')
-        self.assertEqual(response.status_code, 500)
-        self.assertTemplateUsed(response, 'core/500.html')
-
 
 class FollowTest(TestCase):
     @classmethod
