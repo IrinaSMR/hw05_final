@@ -256,7 +256,7 @@ class FollowTest(TestCase):
             ('Авторизуйтесь, чтобы оставить комментарий.')
         )
         follow = Follow.objects.all().count()
-        self.assertEqual(follow, 0) 
+        self.assertEqual(follow, 0)
 
     def test_authorized_client_cannot_follow_twice(self):
         """Проверка уникальности подписки авторизованного пользователя."""
