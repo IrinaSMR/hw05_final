@@ -1,8 +1,9 @@
+from http import HTTPStatus
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
-
-from posts.models import Group, Post, User
+from posts.models import Comment, Group, Post, User
 
 NEW_TEXT = 'Новый пост'
 UPDATED_TEXT = 'Обновленный текст'
@@ -90,4 +91,56 @@ class PostFormTests(TestCase):
             reverse(
                 'posts:profile',
                 args=[PostFormTests.user.username])
+        )
+
+
+class CommentTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='test_user')
+        cls.guest_client = Client()
+        cls.auth_author_client = Client()
+        cls.auth_author_client.force_login(cls.user)
+        cls.authorized_not_author_client = Client()
+        cls.authorized_not_author_client.force_login(cls.user)
+        cls.post = Post.objects.create(
+            text='test_post',
+            author=cls.user
+        )
+
+    def test_auth_user_can_comment(self):
+        """Комментировать посты может только авторизованный пользователь"""
+        post = Post.objects.first()
+        form_data = {
+            'text': 'Комментарий от авторизованного пользователя'
+        }
+
+        self.authorized_not_author_client.post(
+            reverse(
+                'posts:add_comment',
+                kwargs={'post_id': post.id}
+            ),
+            data=form_data,
+            follow=True
+        )
+        self.assertTrue(
+            Comment.objects.filter(text=form_data['text']).exists())
+        response = CommentTest.authorized_not_author_client.get(
+            reverse('posts:post_detail', kwargs={'post_id': post.id})
+        )
+        comment = Comment.objects.last()
+        self.assertIn(
+            comment, response.context['comments'], 'Комментарий отсутствует')
+
+    def test_guest_user_cannot_comment(self):
+        """Неавторизованный пользователь не может комментировать"""
+        post = Post.objects.first()
+        response = CommentTest.guest_client.get(
+            reverse('posts:add_comment', kwargs={'post_id': post.id})
+        )
+        self.assertEqual(
+            response.status_code,
+            HTTPStatus.FOUND,
+            ('Неавторизированный пользователь не может оставлять комментарии')
         )

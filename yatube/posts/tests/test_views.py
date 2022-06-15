@@ -1,5 +1,6 @@
 import shutil
 import tempfile
+from http import HTTPStatus
 
 from django import forms
 from django.conf import settings
@@ -8,8 +9,7 @@ from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
-
-from posts.models import Comment, Follow, Group, Post
+from posts.models import Follow, Group, Post
 
 User = get_user_model()
 
@@ -166,32 +166,6 @@ class PostPagesTest(TestCase):
         self.assertEqual(response_post.text, PostPagesTest.post.text)
         self.assertEqual(response_post.image, PostPagesTest.post.image)
 
-    def test_auth_user_can_comment(self):
-        """Комментировать посты может только авторизованный пользователь"""
-        post = Post.objects.first()
-        form_data = {
-            'text': 'Комментарий от авторизованного пользователя',
-            'post': post,
-            'author': PostPagesTest.not_author
-        }
-
-        self.authorized_not_author_client.post(
-            reverse(
-                'posts:add_comment',
-                kwargs={'post_id': post.id}
-            ),
-            data=form_data,
-            follow=True
-        )
-        self.assertTrue(
-            Comment.objects.filter(text=form_data['text']).exists())
-        response = self.authorized_not_author_client.get(
-            reverse('posts:post_detail', kwargs={'post_id': post.id})
-        )
-        comment = Comment.objects.last()
-        self.assertIn(
-            comment, response.context['comments'], 'Комментарий отсутствует')
-
     def test_index_page_cache(self):
         """Проверка работы кэша на странице index."""
         page_1 = self.guest_client.get(reverse('posts:index')).content
@@ -247,13 +221,6 @@ class PaginatorViewsTest(TestCase):
                 ).object_list), 3)
 
 
-class ViewTestClass(TestCase):
-    def test_page_not_found(self):
-        response = self.client.get('/nonexist-page/')
-        self.assertEqual(response.status_code, 404)
-        self.assertTemplateUsed(response, 'core/404.html')
-
-
 class FollowTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -268,18 +235,36 @@ class FollowTest(TestCase):
 
     def test_authorized_client_can_follow(self):
         """Только авторизованный пользователь может подписываться."""
+        follow = Follow.objects.all().count()
+        self.assertEqual(follow, 0)
         self.authorized_client.get(
             reverse('posts:profile_follow',
                     kwargs={'username': self.author})
         )
         follow = Follow.objects.all().count()
         self.assertEqual(follow, 1)
-        self.guest_client.get(
+    
+    def test_not_authorized_client_cannot_follow(self):
+        """Неавторизованный пользователь не может подписываться."""
+        response = self.guest_client.get(
             reverse('posts:profile_follow',
                     kwargs={'username': self.author})
         )
+        self.assertEqual(
+            response.status_code,
+            HTTPStatus.FOUND,
+            ('Авторизуйтесь, чтобы оставить комментарий.')
+        )
+        follow = Follow.objects.all().count()
+        self.assertEqual(follow, 0)            
+
+    def test_authorized_client_cannot_follow_twice(self):
+        """Проверка уникальности подписки авторизованного пользователя."""
+        Follow.objects.create(user=self.user, author=self.author)
         follow = Follow.objects.all().count()
         self.assertEqual(follow, 1)
+        with self.assertRaises(Exception):
+            Follow.objects.create(user=self.user, author=self.author)
 
     def test_authorized_client_can_unfollow(self):
         """Только авторизованный пользователь может отписываться."""
@@ -311,3 +296,20 @@ class FollowTest(TestCase):
         self.assertEqual(count, 1)
         author = response.context['page_obj'][0].author
         self.assertEqual(author, self.author)
+
+    def test_new_post_for_not_follower(self):
+        """Новая запись автора не появляется к ленте тех,
+         кто на него не подписан.""" 
+        follow = Follow.objects.all().count()
+        self.assertEqual(follow, 0)
+        Post.objects.create(text='Пост для ленты', author=self.author)
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        count = len(response.context['page_obj'])
+        self.assertEqual(count, 0)
+
+
+class ViewTestClass(TestCase):
+    def test_page_not_found(self):
+        response = self.client.get('/nonexist-page/')
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, 'core/404.html')
