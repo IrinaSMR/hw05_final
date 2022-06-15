@@ -143,4 +143,3 @@ class CommentTest(TestCase):
             response.status_code,
             HTTPStatus.FOUND,
             ('Неавторизированный пользователь не может оставлять комментарии')
-        )

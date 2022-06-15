@@ -243,7 +243,7 @@ class FollowTest(TestCase):
         )
         follow = Follow.objects.all().count()
         self.assertEqual(follow, 1)
-    
+
     def test_not_authorized_client_cannot_follow(self):
         """Неавторизованный пользователь не может подписываться."""
         response = self.guest_client.get(
@@ -256,7 +256,7 @@ class FollowTest(TestCase):
             ('Авторизуйтесь, чтобы оставить комментарий.')
         )
         follow = Follow.objects.all().count()
-        self.assertEqual(follow, 0)            
+        self.assertEqual(follow, 0) 
 
     def test_authorized_client_cannot_follow_twice(self):
         """Проверка уникальности подписки авторизованного пользователя."""
@@ -299,7 +299,7 @@ class FollowTest(TestCase):
 
     def test_new_post_for_not_follower(self):
         """Новая запись автора не появляется к ленте тех,
-         кто на него не подписан.""" 
+         кто на него не подписан."""
         follow = Follow.objects.all().count()
         self.assertEqual(follow, 0)
         Post.objects.create(text='Пост для ленты', author=self.author)
