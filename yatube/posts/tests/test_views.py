@@ -235,13 +235,15 @@ class FollowTest(TestCase):
 
     def test_authorized_client_can_follow(self):
         """Авторизованный пользователь может подписываться."""
-        follow = Follow.objects.filter(user=self.user, author=self.author).count()
+        follow = Follow.objects.filter(
+            user=self.user, author=self.author).count()
         self.assertEqual(follow, 0)
         self.authorized_client.get(
             reverse('posts:profile_follow',
                     kwargs={'username': self.author})
         )
-        follow = Follow.objects.filter(user=self.user, author=self.author).count()
+        follow = Follow.objects.filter(
+            user=self.user, author=self.author).count()
         self.assertEqual(follow, 1)
 
     def test_not_authorized_client_cannot_follow(self):
@@ -280,7 +282,8 @@ class FollowTest(TestCase):
             reverse('posts:profile_follow',
                     kwargs={'username': self.author})
         )
-        follow = Follow.objects.filter(user=self.user, author=self.author).count()
+        follow = Follow.objects.filter(
+            user=self.user, author=self.author).count()
         self.assertEqual(follow, 1)
 
     def test_authorized_client_can_unfollow(self):
