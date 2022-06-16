@@ -234,14 +234,14 @@ class FollowTest(TestCase):
                                        author=cls.user)
 
     def test_authorized_client_can_follow(self):
-        """Только авторизованный пользователь может подписываться."""
-        follow = Follow.objects.all().count()
+        """Авторизованный пользователь может подписываться."""
+        follow = Follow.objects.filter(user=self.user, author=self.author).count()
         self.assertEqual(follow, 0)
         self.authorized_client.get(
             reverse('posts:profile_follow',
                     kwargs={'username': self.author})
         )
-        follow = Follow.objects.all().count()
+        follow = Follow.objects.filter(user=self.user, author=self.author).count()
         self.assertEqual(follow, 1)
 
     def test_not_authorized_client_cannot_follow(self):
@@ -259,12 +259,29 @@ class FollowTest(TestCase):
         self.assertEqual(follow, 0)
 
     def test_authorized_client_cannot_follow_twice(self):
-        """Проверка уникальности подписки авторизованного пользователя."""
+        """Проверка наличия ограничения на подписку на уровне БД."""
         Follow.objects.create(user=self.user, author=self.author)
         follow = Follow.objects.all().count()
         self.assertEqual(follow, 1)
         with self.assertRaises(Exception):
             Follow.objects.create(user=self.user, author=self.author)
+
+    def test_authorized_client_cannot_follow_twice(self):
+        """Проверка уникальности подписки авторизованного пользователя
+         (вызов метода get_or_create во view-функции)."""
+        self.authorized_client.get(
+            reverse('posts:profile_follow',
+                    kwargs={'username': self.author})
+        )
+        follow = Follow.objects.filter(
+            user=self.user, author=self.author).count()
+        self.assertEqual(follow, 1)
+        self.authorized_client.get(
+            reverse('posts:profile_follow',
+                    kwargs={'username': self.author})
+        )
+        follow = Follow.objects.filter(user=self.user, author=self.author).count()
+        self.assertEqual(follow, 1)
 
     def test_authorized_client_can_unfollow(self):
         """Только авторизованный пользователь может отписываться."""

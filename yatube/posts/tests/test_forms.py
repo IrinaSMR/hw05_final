@@ -1,5 +1,3 @@
-from http import HTTPStatus
-
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -110,7 +108,7 @@ class CommentTest(TestCase):
         )
 
     def test_auth_user_can_comment(self):
-        """Комментировать посты может только авторизованный пользователь"""
+        """Авторизованный пользователь может комментировать посты"""
         post = Post.objects.first()
         form_data = {
             'text': 'Комментарий от авторизованного пользователя'
@@ -134,13 +132,20 @@ class CommentTest(TestCase):
             comment, response.context['comments'], 'Комментарий отсутствует')
 
     def test_guest_user_cannot_comment(self):
-        """Неавторизованный пользователь не может комментировать"""
+        """Неавторизованный пользователь не может
+         оставлять комментарии"""
         post = Post.objects.first()
-        response = CommentTest.guest_client.get(
-            reverse('posts:add_comment', kwargs={'post_id': post.id})
+        form_data = {
+            'text': 'Комментарий от неавторизованного пользователя'
+        }
+        CommentTest.guest_client.post(
+            reverse(
+                'posts:add_comment',
+                kwargs={'post_id': post.id}
+            ),
+            data=form_data,
+            follow=True
         )
+        comment = Comment.objects.last()
         self.assertEqual(
-            response.status_code,
-            HTTPStatus.FOUND,
-            ('Неавторизированный пользователь не может оставлять комментарии')
-        )
+            comment, None)

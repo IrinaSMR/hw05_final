@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Q, F, CheckConstraint
 
 User = get_user_model()
 
@@ -69,7 +70,9 @@ class Follow(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['user', 'author'],
-                       name='unique_follower')]
+                       name='unique_follower'),
+                       CheckConstraint(check=~Q(user=F('author')),
+                       name='no_self_following')]
 
     def __str__(self):
         return self.text
