@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.utils import IntegrityError
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from posts.models import Follow, Group, Post
@@ -236,15 +237,15 @@ class FollowTest(TestCase):
     def test_authorized_client_can_follow(self):
         """Авторизованный пользователь может подписываться."""
         follow = Follow.objects.filter(
-            user=self.user, author=self.author).count()
-        self.assertEqual(follow, 0)
+            user=self.user, author=self.author).exists()
+        self.assertEqual(follow, False)
         self.authorized_client.get(
             reverse('posts:profile_follow',
                     kwargs={'username': self.author})
         )
         follow = Follow.objects.filter(
-            user=self.user, author=self.author).count()
-        self.assertEqual(follow, 1)
+            user=self.user, author=self.author).exists()
+        self.assertEqual(follow, True)
 
     def test_not_authorized_client_cannot_follow(self):
         """Неавторизованный пользователь не может подписываться."""
@@ -265,7 +266,7 @@ class FollowTest(TestCase):
         Follow.objects.create(user=self.user, author=self.author)
         follow = Follow.objects.all().count()
         self.assertEqual(follow, 1)
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             Follow.objects.create(user=self.user, author=self.author)
 
     def test_authorized_client_cannot_follow_twice(self):

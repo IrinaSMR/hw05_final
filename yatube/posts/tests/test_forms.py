@@ -146,6 +146,6 @@ class CommentTest(TestCase):
             data=form_data,
             follow=True
         )
-        comment = Comment.objects.last()
+        comment = Comment.objects.filter(post_id=post.id).exists()
         self.assertEqual(
-            comment, None)
+            comment, False)
