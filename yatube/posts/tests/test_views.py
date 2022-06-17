@@ -260,7 +260,7 @@ class FollowTest(TestCase):
         follow = Follow.objects.all().count()
         self.assertEqual(follow, 0)
 
-    def test_authorized_client_cannot_follow_twice(self):
+    def test_constrains_for_following(self):
         """Проверка наличия ограничения на подписку на уровне БД."""
         Follow.objects.create(user=self.user, author=self.author)
         follow = Follow.objects.all().count()
